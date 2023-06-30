@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "layerzero-python-aptos"
+version = "1.0.0"
+description = "LayerZero bridging functionallity for Python"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "layerzero_python_aptos"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+eth-abi = "^4.1.0"
+aptos-sdk = "^0.6.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

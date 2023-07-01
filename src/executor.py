@@ -1,3 +1,6 @@
+import binascii
+import struct
+
 from aptos_sdk.client import RestClient
 
 
@@ -13,12 +16,33 @@ class Executor:
         self.sdk = sdk
 
     def decode_adapter_params(self, adapter_params: str):
-        raise NotImplementedError
+        """
+        txType 1
+        bytes  [2       8       ]
+        fields [txType  extraGas]
+        txType 2
+        bytes  [2       8         8           unfixed       ]
+        fields [txType  extraGas  airdropAmt  airdropAddress]
+        """
+        byte_array = bytes.fromhex(adapter_params[2:])
+        type_ = struct.unpack('>H', byte_array[:2])[0]
+        if type_ == 1:
+            # default
+            assert len(byte_array) == 10, "invalid adapter params"
+            return [type_, struct.unpack('!Q', byte_array[2:])[0], 0, '']
+        elif type_ == 2:
+            # airdrop
+            assert len(byte_array) > 18, "invalid adapter params"
+            ua_gas, airdrop_amount = struct.unpack('!QQ', byte_array[2:18])
+            airdrop_address = "0x" + binascii.hexlify(byte_array[18:]).decode("utf-8")
+            return [type_, ua_gas, airdrop_amount, airdrop_address]
+        else:
+            assert False, "invalid adapter params"
 
-    def get_default_adapter_params(self, executor: str, dst_chain_id: int):
+    def get_default_adapter_params(self, dst_chain_id: int):
         resource = self.sdk.account_resource(
-            executor,
-            f"{self.layerzero_address}::executor_v1::AdapterParamsConfig"
+            self.layerzero_address,
+            f"{self.module}::AdapterParamsConfig"
         )
 
         response = self.sdk.get_table_item(

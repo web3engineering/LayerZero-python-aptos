@@ -1,4 +1,5 @@
 from aptos_sdk.client import RestClient
+from executor import Executor
 
 rest_client = RestClient("https://mainnet.aptoslabs.com/v1")
 
@@ -26,40 +27,52 @@ rest_client = RestClient("https://mainnet.aptoslabs.com/v1")
 
 DEST_CHAIN = 110
 
-# Account owns resources. 0x12 is account, 0x54 is a resource_type.
-# You can find resources associated with accounts here:
-# https://explorer.aptoslabs.com/account/0x1d8727df513fa2a8785d0834e40b34223daff1affc079574082baadb74b66ee4/resources?network=mainnet
-r1 = rest_client.account_resource(
-    "0x12e12de0af996d9611b0b78928cd9f4cbf50d94d972043cdd829baa77a78929b",
-    "0x54ad3d30af77b60d939ae356e6606de9a4da67583f02b962d2d3f2e481484e90::uln_signer::Config")
+def test():
 
-# as a result we are getting a resource HANDLE - this is a way to READ resource (table)
-# where fee is stored
-print(r1)
+    # Account owns resources. 0x12 is account, 0x54 is a resource_type.
+    # You can find resources associated with accounts here:
+    # https://explorer.aptoslabs.com/account/0x1d8727df513fa2a8785d0834e40b34223daff1affc079574082baadb74b66ee4/resources?network=mainnet
+    r1 = rest_client.account_resource(
+        "0x12e12de0af996d9611b0b78928cd9f4cbf50d94d972043cdd829baa77a78929b",
+        "0x54ad3d30af77b60d939ae356e6606de9a4da67583f02b962d2d3f2e481484e90::uln_signer::Config")
 
-r1_table = rest_client.get_table_item(
-    r1['data']['fees']['handle'],
-    'u64',
-    "0x54ad3d30af77b60d939ae356e6606de9a4da67583f02b962d2d3f2e481484e90::uln_signer::Fee",
-    str(DEST_CHAIN)
-)
+    # as a result we are getting a resource HANDLE - this is a way to READ resource (table)
+    # where fee is stored
+    print(r1)
 
-print(r1_table)
+    r1_table = rest_client.get_table_item(
+        r1['data']['fees']['handle'],
+        'u64',
+        "0x54ad3d30af77b60d939ae356e6606de9a4da67583f02b962d2d3f2e481484e90::uln_signer::Fee",
+        str(DEST_CHAIN)
+    )
 
-# Same here. Generally, L0 has two accounts (oracle + executor), 
-# and we are reading fees from them.
-r2 = rest_client.account_resource(
-    "0x1d8727df513fa2a8785d0834e40b34223daff1affc079574082baadb74b66ee4",
-    "0x54ad3d30af77b60d939ae356e6606de9a4da67583f02b962d2d3f2e481484e90::uln_signer::Config"
-)
+    print(r1_table)
 
-print(r2)
+    # Same here. Generally, L0 has two accounts (oracle + executor), 
+    # and we are reading fees from them.
+    r2 = rest_client.account_resource(
+        "0x1d8727df513fa2a8785d0834e40b34223daff1affc079574082baadb74b66ee4",
+        "0x54ad3d30af77b60d939ae356e6606de9a4da67583f02b962d2d3f2e481484e90::uln_signer::Config"
+    )
 
-r2_table = rest_client.get_table_item(
-    r2['data']['fees']['handle'],
-    'u64',
-    "0x54ad3d30af77b60d939ae356e6606de9a4da67583f02b962d2d3f2e481484e90::uln_signer::Fee",
-    str(DEST_CHAIN)
-)
+    print(r2)
 
-print(r2_table)
+    r2_table = rest_client.get_table_item(
+        r2['data']['fees']['handle'],
+        'u64',
+        "0x54ad3d30af77b60d939ae356e6606de9a4da67583f02b962d2d3f2e481484e90::uln_signer::Fee",
+        str(DEST_CHAIN)
+    )
+
+    print(r2_table)
+
+
+# This is what JS returns
+# raw params <Buffer 00 01 00 00 00 00 00 26 25 a0>
+# [ 1, 2500000n, 0n, '' ]
+executor = Executor(rest_client)
+raw_params = executor.get_default_adapter_params(DEST_CHAIN)
+print(raw_params, type(raw_params))  # 0x000100000000002625a0
+params = executor.decode_adapter_params(raw_params)
+print(params)

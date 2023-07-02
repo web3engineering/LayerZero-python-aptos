@@ -12,7 +12,7 @@ class ExecutorConfig:
 
     def get_executor(self, ua_address: str, dst_chain_id: int):
         resource = self.sdk.account_resource(
-            ua_address,
+            self.layerzero_address,
             f"{self.module}::ConfigStore",
         )
         response = self.sdk.get_table_item(

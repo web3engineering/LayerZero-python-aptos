@@ -1,6 +1,5 @@
 from aptos_sdk.client import RestClient
-
-from .uln_signer import UlnSigner
+from src.aptos.uln.uln_signer import UlnSigner
 
 
 class UlnConfig:
@@ -31,7 +30,7 @@ class UlnConfig:
     def get_app_config(self, ua_address: str, dst_chain_id: int):
         # TODO: RESOLVE IT FOR GET_TABLE_ITEM
         # aptos_sdk.client.ApiError: {"message":"Table Item not found by Table handle(0xf576de3aafdcd17b912476f145c1c839ee34edc71a5fa7633d8267df0b2501c4), Table key({\"ua_address\":\"0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa\",\"chain_id\":\"110\"}) and Ledger version(169788690)","error_code":"table_item_not_found","vm_error_code":null}
-        default_config = self.get_default_app_config(dst_chain_id)  # Do we need to merge it?
+        # default_config = self.get_default_app_config(dst_chain_id)  # Do we need to merge it?
         resource = self.sdk.account_resource(
             self.layerzero_address,
             f"{self.module}::UaUlnConfig"
@@ -43,7 +42,7 @@ class UlnConfig:
             value_type=f"{self.module}::UlnConfig",
             key={
                 "ua_address": ua_address,
-                "chain_id": dst_chain_id
+                "chain_id": str(dst_chain_id)
             }
         )
 
@@ -52,15 +51,17 @@ class UlnConfig:
         return config
 
     def quote_fee(self, ua_address: str, dst_chain_id: int, payload_size: int) -> int:
-        config = self.get_app_config(ua_address, dst_chain_id)
-        oracle_fee = self.uln_signer.get_fee(self.oracle_address, dst_chain_id)
-        relayer_fee = self.uln_signer.get_fee(self.executor_address, dst_chain_id)
+        config = self.get_default_app_config(dst_chain_id)
+
+        oracle_fee = self.uln_signer.get_fee(config['oracle'], dst_chain_id)
+        relayer_fee = self.uln_signer.get_fee(config['relayer'], dst_chain_id)
         treasury_config_resource = self.sdk.account_resource(
             self.layerzero_address,
             f"{self.layerzero_address}::msglib_v1_0::GlobalStore"
         )
-        treasury_fee_bps = treasury_config_resource['data']['treasury_fee_bps']
-        total_fee = relayer_fee['base_fee'] + relayer_fee['fee_per_byte'] * payload_size
-        total_fee += oracle_fee['base_fee'] + oracle_fee['fee_per_byte'] * payload_size
+
+        treasury_fee_bps = int(treasury_config_resource['data']['treasury_fee_bps'])
+        total_fee = int(relayer_fee['base_fee']) + int(relayer_fee['fee_per_byte']) * payload_size
+        total_fee += int(oracle_fee['base_fee']) + int(oracle_fee['fee_per_byte']) * payload_size
         total_fee += (treasury_fee_bps * total_fee) / 10000
         return total_fee

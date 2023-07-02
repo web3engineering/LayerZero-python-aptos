@@ -19,10 +19,10 @@ class UlnSigner:
         )
 
         response = self.sdk.get_table_item(
-            resource['data']['handle'],
+            resource['data']['fees']['handle'],
             key_type='u64',
             value_type=f'{self.module}::Fee',
-            key=dst_chain_id,
+            key=str(dst_chain_id),
         )
 
         return {

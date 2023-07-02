@@ -54,7 +54,7 @@ class Executor:
 
         return response
 
-    def get_fee(self, executor: str, dst_chain_id: str):
+    def get_fee(self, executor: str, dst_chain_id: int):
         resource = self.sdk.account_resource(
             executor,
             f"{self.layerzero_address}::executor_v1::ExecutorConfig"
@@ -73,13 +73,11 @@ class Executor:
             "price_ratio": response["price_ratio"]
         }
 
-    def quote_fee(self, executor: str, dst_chain_id: int, adapter_params: None | list) -> int:
+    def quote_fee(self, dst_chain_id: int, adapter_params: None | list = None) -> int:
         if not adapter_params:
-            adapter_params = self.get_default_adapter_params(
-                self.layerzero_address, dst_chain_id
-            )
+            adapter_params = self.get_default_adapter_params(dst_chain_id)
 
         fee = self.get_fee(self.executor_address, dst_chain_id)
-        _, ua_gas, airdrop_amount = self.decode_adapter_params(adapter_params)
+        _, ua_gas, airdrop_amount, _ = self.decode_adapter_params(adapter_params)
 
-        return ((ua_gas * fee['gas_price'] + airdrop_amount) * fee['price_ratio']) / 10000000000
+        return ((ua_gas * int(fee['gas_price']) + airdrop_amount) * int(fee['price_ratio'])) / 10000000000

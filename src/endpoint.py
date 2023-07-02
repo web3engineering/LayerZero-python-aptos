@@ -1,3 +1,8 @@
+from aptos_sdk.client import RestClient
+
+from executor import Executor
+from executor_config import ExecutorConfig
+from uln.uln_config import UlnConfig
 
 
 class Endpoint:
@@ -62,11 +67,7 @@ class Endpoint:
         return response
 
     def quote_fee(self, ua_address: str, dst_chain_id: int, adapter_params, payload_size):
-        # adapter_params = [????]
-        # payload_size = 74
-
         total_fee = self.uln_module.quote_fee(ua_address, dst_chain_id, payload_size)
-        print(total_fee)
         executor, _ = self.executor_config.get_executor(ua_address, dst_chain_id)
         total_fee += self.executor.get_fee(executor, dst_chain_id, adapter_params)
         return total_fee

@@ -1,5 +1,6 @@
 from aptos_sdk.client import RestClient
 from executor import Executor
+from endpoint import Endpoint
 
 rest_client = RestClient("https://mainnet.aptoslabs.com/v1")
 
@@ -68,11 +69,23 @@ def test():
     print(r2_table)
 
 
-# This is what JS returns
-# raw params <Buffer 00 01 00 00 00 00 00 26 25 a0>
-# [ 1, 2500000n, 0n, '' ]
-executor = Executor(rest_client)
-raw_params = executor.get_default_adapter_params(DEST_CHAIN)
-print(raw_params, type(raw_params))  # 0x000100000000002625a0
-params = executor.decode_adapter_params(raw_params)
-print(params)
+    # This is what JS returns
+    # raw params <Buffer 00 01 00 00 00 00 00 26 25 a0>
+    # [ 1, 2500000n, 0n, '' ]
+    executor = Executor(rest_client)
+    raw_params = executor.get_default_adapter_params(DEST_CHAIN)
+    print(raw_params, type(raw_params))  # 0x000100000000002625a0
+    params = executor.decode_adapter_params(raw_params)
+    print(params)
+
+
+
+
+endpoint = Endpoint(rest_client)
+fee = endpoint.quote_fee(
+    "0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa",
+    str(DEST_CHAIN),
+    [0, 1, 0,0,0 , 0 , 0, 22 ,  227, 96],
+    "74"
+)
+print(fee)

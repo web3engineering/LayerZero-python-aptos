@@ -1,7 +1,7 @@
 from aptos_sdk.client import RestClient
-from src.aptos.executor import Executor
-from src.aptos.executor_config import ExecutorConfig
-from src.aptos.uln.uln_config import UlnConfig
+from src.executor import Executor
+from src.executor_config import ExecutorConfig
+from src.uln.uln_config import UlnConfig
 
 
 class Endpoint:

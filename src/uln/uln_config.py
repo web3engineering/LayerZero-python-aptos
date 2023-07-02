@@ -1,5 +1,5 @@
 from aptos_sdk.client import RestClient
-from src.aptos.uln.uln_signer import UlnSigner
+from src.uln.uln_signer import UlnSigner
 
 
 class UlnConfig:

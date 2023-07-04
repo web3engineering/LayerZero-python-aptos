@@ -1,5 +1,7 @@
 from aptos_sdk.client import RestClient
 from executor import Executor
+from endpoint import Endpoint
+import binascii
 
 rest_client = RestClient("https://mainnet.aptoslabs.com/v1")
 
@@ -66,3 +68,11 @@ def test():
     )
 
     print(r2_table)
+
+ep = Endpoint(rest_client)
+print('final fee=', ep.quote_fee(
+        "0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa",
+        DEST_CHAIN,
+        "0x" + binascii.hexlify(bytes([0, 1, 0,0,0 , 0 , 0, 22 ,  227, 96])).decode('ascii'),
+        74
+))

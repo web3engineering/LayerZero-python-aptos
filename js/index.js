@@ -15,7 +15,7 @@ const printFee = async () => {
         Uint8Array.from([0, 1, 0,0,0 , 0 , 0, 22 ,  227, 96]),
         74
     )
-    console.log(fee)
+    console.log('Final fee=', fee)
 }
 
 const getAdapterParams = async () => {
@@ -25,4 +25,4 @@ const getAdapterParams = async () => {
     console.log(dp)
 }
 
-getAdapterParams()
+printFee()

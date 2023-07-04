@@ -68,6 +68,6 @@ class Endpoint:
     def quote_fee(self, ua_address: str, dst_chain_id: int, adapter_params, payload_size):
         total_fee = self.uln_module.quote_fee(ua_address, dst_chain_id, payload_size)
         executor, _ = self.executor_config.get_executor(ua_address, dst_chain_id)
-        total_fee += self.executor.quote_fee(dst_chain_id)
+        total_fee += self.executor.quote_fee(executor, dst_chain_id, adapter_params)
         return total_fee
 

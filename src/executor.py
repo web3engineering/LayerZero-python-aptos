@@ -1,5 +1,6 @@
 import binascii
 import struct
+from typing import Optional
 
 from aptos_sdk.client import RestClient
 
@@ -73,11 +74,11 @@ class Executor:
             "price_ratio": response["price_ratio"]
         }
 
-    def quote_fee(self, dst_chain_id: int, adapter_params: None | list = None) -> int:
+    def quote_fee(self, executor: str, dst_chain_id: int, adapter_params: Optional[list] = None) -> int:
         if not adapter_params:
             adapter_params = self.get_default_adapter_params(dst_chain_id)
 
-        fee = self.get_fee(self.executor_address, dst_chain_id)
+        fee = self.get_fee(executor, dst_chain_id)
         _, ua_gas, airdrop_amount, _ = self.decode_adapter_params(adapter_params)
 
         return ((ua_gas * int(fee['gas_price']) + airdrop_amount) * int(fee['price_ratio'])) / 10000000000

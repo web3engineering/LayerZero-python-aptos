@@ -39,7 +39,7 @@ class Bridge:
                 TransactionArgument(dst_chain_id, Serializer.u64),
                 TransactionArgument(list(binascii.unhexlify(dst_receiver)), Serializer.sequence_serializer(Serializer.u8)),
                 TransactionArgument(amount, Serializer.u64),
-                TransactionArgument(int(native_fee) * 2, Serializer.u64),
+                TransactionArgument(int(native_fee), Serializer.u64),
                 TransactionArgument(int(zro_fee), Serializer.u64),
                 TransactionArgument(unwrap, Serializer.bool),
                 TransactionArgument(list(binascii.unhexlify(adapter_params)), Serializer.sequence_serializer(Serializer.u8)),

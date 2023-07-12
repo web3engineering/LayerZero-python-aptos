@@ -1,7 +1,10 @@
+import binascii
+
 from aptos_sdk.account import Account
 from aptos_sdk.client import RestClient
 from aptos_sdk.type_tag import TypeTag, StructTag
-from aptos_sdk.transactions import EntryFunction, TransactionPayload
+from aptos_sdk.bcs import Serializer
+from aptos_sdk.transactions import EntryFunction, TransactionPayload, TransactionArgument
 
 
 class Bridge:
@@ -15,32 +18,43 @@ class Bridge:
         self.module_name = 'bridge::coin_bridge'
         self.ua_type = f'{self.BRIDGE_ADDRESS}::coin_bridge::BridgeUA'
 
-    def get_send_coin_payload(self, coin, dst_chain_id, dst_receiver, amount, native_fee, zro_fee, unwrap, adapter_params, msglib_pararms):
+    def get_send_coin_payload(
+            self,
+            dst_chain_id: int,
+            dst_receiver: str,
+            amount: int,
+            native_fee: int,
+            zro_fee: int,
+            unwrap: bool,
+            adapter_params: str,
+            msglib_pararms: list[str]
+    ):
+        dst_receiver = dst_receiver[2:].rjust(64, "0")
+        adapter_params = adapter_params[2:]
         return {
             "module": self.module,
-            "function": f"{self.module}::send_coin_from",
-            "type_arguments": [coin],
+            "function": "send_coin_from",
+            "type_arguments": [TypeTag(StructTag.from_str(f'{self.BRIDGE_ADDRESS}::asset::USDC'))],
             "arguments": [
-                str(dst_chain_id),
-                dst_receiver,
-                str(amount),
-                str(native_fee),
-                str(zro_fee),
-                str(unwrap),
-                adapter_params,
-                msglib_pararms,
+                TransactionArgument(dst_chain_id, Serializer.u64),
+                TransactionArgument(list(binascii.unhexlify(dst_receiver)), Serializer.sequence_serializer(Serializer.u8)),
+                TransactionArgument(amount, Serializer.u64),
+                TransactionArgument(int(native_fee) * 2, Serializer.u64),
+                TransactionArgument(int(zro_fee), Serializer.u64),
+                TransactionArgument(unwrap, Serializer.bool),
+                TransactionArgument(list(binascii.unhexlify(adapter_params)), Serializer.sequence_serializer(Serializer.u8)),
+                TransactionArgument(msglib_pararms, Serializer.sequence_serializer(Serializer.u8)),
             ]
         }
 
     def send_coin(self, amount, dst_chain_id, dst_receiver, fee, adapter_params):
         send_coin_payload = self.get_send_coin_payload(
-            coin="USDC",
             dst_chain_id=dst_chain_id,
             dst_receiver=dst_receiver,
             amount=amount,
             native_fee=fee,
             zro_fee=0,
-            unwrap="false",
+            unwrap=False,
             adapter_params=adapter_params,
             msglib_pararms=[],
         )
@@ -48,48 +62,26 @@ class Bridge:
         payload = EntryFunction.natural(
             send_coin_payload["module"],
             send_coin_payload["function"],
-            ["USDC", ],
+            send_coin_payload["type_arguments"],
             send_coin_payload["arguments"],
         )
 
-        # raw_transaction = self.sdk.create_bcs_transaction(
-        #     self.account, TransactionPayload(payload)
-        # )
-        simulated_transacation = self.sdk.simulate_transaction(payload, self.account)
-        print(f"Симуляция транзакции: {simulated_transacation}")
+        raw_transaction = self.sdk.create_bcs_transaction(
+            self.account, TransactionPayload(payload)
+        )
+
+        simulated_transacation = self.sdk.simulate_transaction(
+            transaction=raw_transaction,
+            sender=self.account
+        )
 
         if not simulated_transacation[0]["success"]:
             raise ValueError(simulated_transacation[0]["vm_status"])
 
         signed_transaction = self.sdk.create_bcs_signed_transaction(
-            self.account, payload
+            self.account, TransactionPayload(payload)
         )
         txn = self.sdk.submit_bcs_transaction(signed_transaction)
         self.sdk.wait_for_transaction(txn)
 
         return txn
-
-
-'''
-How to:
-    bridge = Bridge(private_key=*****)
-    sdk = RestClient(RPC_URL)
-    executor = Executor(sdk)
-    endpoint = Endpoint(sdk)
-    
-    adapter_params = executor.get_default_adapter_params(110)  # 110 is chain
-    fee = endpoint.quote_fee(
-        ua_address=wallet.address,
-        dst_chain_id=106,  # Avalanche?
-        adapter_params=adapter_params,
-        payload_size=74,  # CONST
-    )
-
-    bridge.send_coin(
-        amount=10000000,  # 10 USDC
-        dst_chain_id=106,  # Avalanche?
-        dst_receiver=evm_wallet_address,  # Не уверен че за пар-р, методом тыка
-        fee=fee,
-        adapter_params=adapter_params,
-    )
-'''

@@ -1,19 +1,19 @@
 import binascii
 
-from aptos_sdk.account import Account
-from aptos_sdk.client import RestClient
-from aptos_sdk.type_tag import TypeTag, StructTag
 from aptos_sdk.bcs import Serializer
-from aptos_sdk.transactions import EntryFunction, TransactionPayload, TransactionArgument
+from aptos_sdk.transactions import EntryFunction, TransactionArgument
+from aptos_sdk.type_tag import TypeTag, StructTag
+
+from src.const import BRIDGE_ADDRESS, MAINNET
+from src.sdk.aptos_sdk import AptosSdk
+from src.utils import get_u64_raw_address, get_raw_address
 
 
 class Bridge:
-    WALLET_RPC = "https://fullnode.mainnet.aptoslabs.com/v1"
-    BRIDGE_ADDRESS = "0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa"
+    BRIDGE_ADDRESS = BRIDGE_ADDRESS[MAINNET]
 
     def __init__(self, private_key: str):
-        self.account = Account.load_key(private_key)
-        self.sdk = RestClient(self.WALLET_RPC)
+        self.sdk = AptosSdk(private_key)
         self.module = f'{self.BRIDGE_ADDRESS}::coin_bridge'
         self.module_name = 'bridge::coin_bridge'
         self.ua_type = f'{self.BRIDGE_ADDRESS}::coin_bridge::BridgeUA'
@@ -27,24 +27,53 @@ class Bridge:
             zro_fee: int,
             unwrap: bool,
             adapter_params: str,
-            msglib_pararms: list[str]
+            msglib_params: list[str]
     ):
-        dst_receiver = dst_receiver[2:].rjust(64, "0")
-        adapter_params = adapter_params[2:]
+        dst_receiver = get_u64_raw_address(dst_receiver)
+        adapter_params = get_raw_address(adapter_params)  # adapter_params has HEX format, 0x000000000
         return {
             "module": self.module,
             "function": "send_coin_from",
             "type_arguments": [TypeTag(StructTag.from_str(f'{self.BRIDGE_ADDRESS}::asset::USDC'))],
             "arguments": [
-                TransactionArgument(dst_chain_id, Serializer.u64),
-                TransactionArgument(list(binascii.unhexlify(dst_receiver)), Serializer.sequence_serializer(Serializer.u8)),
-                TransactionArgument(amount, Serializer.u64),
-                TransactionArgument(int(native_fee), Serializer.u64),
-                TransactionArgument(int(zro_fee), Serializer.u64),
-                TransactionArgument(unwrap, Serializer.bool),
-                TransactionArgument(list(binascii.unhexlify(adapter_params)), Serializer.sequence_serializer(Serializer.u8)),
-                TransactionArgument(msglib_pararms, Serializer.sequence_serializer(Serializer.u8)),
+                TransactionArgument(
+                    dst_chain_id, Serializer.u64  # noqa
+                ),
+                TransactionArgument(
+                    list(binascii.unhexlify(dst_receiver)), Serializer.sequence_serializer(Serializer.u8)  # noqa
+                ),
+                TransactionArgument(
+                    amount, Serializer.u64  # noqa
+                ),
+                TransactionArgument(
+                    int(native_fee), Serializer.u64  # noqa
+                ),
+                TransactionArgument(
+                    int(zro_fee), Serializer.u64  # noqa
+                ),
+                TransactionArgument(
+                    unwrap, Serializer.bool  # noqa
+                ),
+                TransactionArgument(
+                    list(binascii.unhexlify(adapter_params)), Serializer.sequence_serializer(Serializer.u8)  # noqa
+                ),
+                TransactionArgument(
+                    msglib_params, Serializer.sequence_serializer(Serializer.u8)  # noqa
+                ),
             ]
+        }
+
+    def get_claim_coin_payload(self):
+        return {
+            "module": self.module,
+            "function": "claim_coin",
+            "type_arguments": [
+                TypeTag(
+                    StructTag.from_str(
+                        f"{self.BRIDGE_ADDRESS}::asset::USDC"
+                    )),
+            ],
+            "arguments": [],
         }
 
     def send_coin(self, amount, dst_chain_id, dst_receiver, fee, adapter_params):
@@ -56,7 +85,7 @@ class Bridge:
             zro_fee=0,
             unwrap=False,
             adapter_params=adapter_params,
-            msglib_pararms=[],
+            msglib_params=[],
         )
 
         payload = EntryFunction.natural(
@@ -66,22 +95,16 @@ class Bridge:
             send_coin_payload["arguments"],
         )
 
-        raw_transaction = self.sdk.create_bcs_transaction(
-            self.account, TransactionPayload(payload)
+        return self.sdk.send_and_submit_transaction(payload)
+
+    def claim_coin(self):
+        claim_coin_payload = self.get_claim_coin_payload()
+
+        payload = EntryFunction.natural(
+            claim_coin_payload["module"],
+            claim_coin_payload["function"],
+            claim_coin_payload["type_arguments"],
+            claim_coin_payload["arguments"],
         )
 
-        simulated_transacation = self.sdk.simulate_transaction(
-            transaction=raw_transaction,
-            sender=self.account
-        )
-
-        if not simulated_transacation[0]["success"]:
-            raise ValueError(simulated_transacation[0]["vm_status"])
-
-        signed_transaction = self.sdk.create_bcs_signed_transaction(
-            self.account, TransactionPayload(payload)
-        )
-        txn = self.sdk.submit_bcs_transaction(signed_transaction)
-        self.sdk.wait_for_transaction(txn)
-
-        return txn
+        return self.sdk.send_and_submit_transaction(payload)

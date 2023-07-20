@@ -13,7 +13,7 @@ class Bridge:
     BRIDGE_ADDRESS = BRIDGE_ADDRESS[MAINNET]
 
     def __init__(self, private_key: str):
-        self.sdk = AptosSdk(private_key)
+        self.sdk = AptosSdk(private_key=private_key)
         self.module = f'{self.BRIDGE_ADDRESS}::coin_bridge'
         self.module_name = 'bridge::coin_bridge'
         self.ua_type = f'{self.BRIDGE_ADDRESS}::coin_bridge::BridgeUA'

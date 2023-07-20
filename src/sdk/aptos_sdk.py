@@ -7,7 +7,7 @@ from src.sdk.base_sdk import BaseSdk
 
 
 class AptosSdk(BaseSdk):
-    def __int__(self, private_key: str | None = None):
+    def __init__(self, private_key: str | None = None):
         self.account = Account.load_key(private_key) if private_key else None
         self.client = RestClient(APTOS_RPC)
 

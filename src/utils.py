@@ -1,4 +1,12 @@
-def full_address(address):
+def get_raw_address(address: str) -> str:
+    return address.replace("0x", "")
+
+
+def get_u64_raw_address(address: str) -> str:
+    return get_raw_address(address).rjust(64, "0")
+
+
+def full_address(address: str) -> bytes:
     raw_value = address.replace("0x", "")
     hexadecimal = raw_value.zfill(64).encode()
     return hexadecimal

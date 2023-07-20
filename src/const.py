@@ -1,3 +1,5 @@
+APTOS_RPC = "https://fullnode.mainnet.aptoslabs.com/v1"
+
 SEND_PAYLOAD_LENGTH = 74
 
 MAINNET = "MAINNET"

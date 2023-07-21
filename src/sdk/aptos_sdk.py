@@ -6,10 +6,19 @@ from src.const import APTOS_RPC
 from src.sdk.base_sdk import BaseSdk
 
 
+class ClientConfig:
+    """Common configuration for clients, particularly for submitting transactions"""
+
+    expiration_ttl: int = 600
+    gas_unit_price: int = 100
+    max_gas_amount: int = 50_000
+    transaction_wait_in_seconds: int = 20
+
+
 class AptosSdk(BaseSdk):
     def __init__(self, private_key: str | None = None):
         self.account = Account.load_key(private_key) if private_key else None
-        self.client = RestClient(APTOS_RPC)
+        self.client = RestClient(base_url=APTOS_RPC, client_config=ClientConfig())
 
     def send_and_submit_transaction(self, payload: EntryFunction) -> str:
         raw_transaction = self.client.create_bcs_transaction(

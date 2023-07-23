@@ -41,7 +41,7 @@ class AptosSdk(BaseSdk):
     def simulate_transaction_with_gas_estimate(
     self,
         transaction: RawTransaction,
-        sender: AptosAccount,
+        sender: Account,
     ) -> Dict[str, Any]:
         authenticator = Authenticator(
             Ed25519Authenticator(

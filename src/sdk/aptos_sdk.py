@@ -21,21 +21,15 @@ class AptosSdk(BaseSdk):
         raw_transaction = self.client.create_bcs_transaction(
             self.account, TransactionPayload(payload)
         )
-
         simulated_transaction = self.simulate_transaction_with_gas_estimate(
             transaction=raw_transaction,
             sender=self.account
         )
-
         if not simulated_transaction[0]["success"]:  # noqa
             raise ValueError(simulated_transaction[0]["vm_status"])  # noqa
-        raw_transaction.max_gas_amount = int(int(simulated_transaction[0]['gas_used'], base=10) * (1 + GAS_SAFETY_FACTOR))
-        signed_transaction = self.client.create_bcs_signed_transaction(
-            self.account, TransactionPayload(payload)
-        )
-        txn = self.client.submit_bcs_transaction(signed_transaction)
+        self.client.client_config.max_gas_amount = int(int(simulated_transaction[0]['gas_used'], base=10) * (1 + GAS_SAFETY_FACTOR))
+        txn = self.client.submit_transaction(payload)
         self.client.wait_for_transaction(txn)
-
         return txn
 
     def simulate_transaction_with_gas_estimate(

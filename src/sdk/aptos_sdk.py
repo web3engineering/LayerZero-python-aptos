@@ -17,7 +17,7 @@ class AptosSdk(BaseSdk):
         self.client = RestClient(APTOS_RPC)
 
     def send_and_submit_transaction(self, payload: EntryFunction) -> str:
-        GAS_SAFETY_FACTOR = 0.2
+        GAS_SAFETY_FACTOR = 0.2 # 20%
         raw_transaction = self.client.create_bcs_transaction(
             self.account, TransactionPayload(payload)
         )
@@ -28,7 +28,8 @@ class AptosSdk(BaseSdk):
         if not simulated_transaction[0]["success"]:  # noqa
             raise ValueError(simulated_transaction[0]["vm_status"])  # noqa
         self.client.client_config.max_gas_amount = int(int(simulated_transaction[0]['gas_used'], base=10) * (1 + GAS_SAFETY_FACTOR))
-        txn = self.client.submit_transaction(self.account, TransactionPayload(payload))
+        signed_transaction = self.client.create_bcs_signed_transaction(self.account, TransactionPayload(payload)
+        txn = self.client.submit_bcs_transaction(signed_transaction)
         self.client.wait_for_transaction(txn)
         return txn
 

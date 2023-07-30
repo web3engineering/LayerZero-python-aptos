@@ -33,5 +33,7 @@ to make someting like LayerZero-aptos-sdk but for Python.
 
 TBD: [@ikapeykin](https://github.com/ikapeykin)
 
-## Donations
-APT: 0xbe61cf73777d20a98a59bf9e2901604ef73fae5e21ed2d6e0693387e8f01c154
+## 👨‍💻 Contributors
+We are incredibly grateful to all the contributors in open source, and we highly appreciate your efforts. Each commit warms our hearts <3 
+
+[bobu4](https://github.com/bobu4)

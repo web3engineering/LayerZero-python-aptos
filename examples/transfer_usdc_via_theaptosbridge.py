@@ -28,7 +28,9 @@ def transfer_usdc_via_theaptosbridge(private_key: str, evm_address: str, dst_cha
     endpoint = Endpoint(client)
     executor = Executor(client)
     adapter_params = executor.get_default_adapter_params(dst_chain_id)
-
+    if dst_chain_id == 109:
+        fee = 1800000 
+        adapter_params = '0x000100000000000249f0'
     fee = endpoint.quote_fee(
         ua_address=account.address().hex(),
         dst_chain_id=dst_chain_id,
